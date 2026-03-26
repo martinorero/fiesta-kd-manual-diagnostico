@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fiesta Tech · Manual de Diagnóstico KD 2015</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--black:#050608;--surface:#0c0e12;--surface2:#12151b;--surface3:#181c24;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);--cyan:#00f5d4;--cyan-dim:rgba(0,245,212,0.1);--mag:#f700ff;--mag-dim:rgba(247,0,255,0.1);--yel:#ffe600;--yel-dim:rgba(255,230,0,0.1);--red:#ff3860;--red-dim:rgba(255,56,96,0.1);--green:#00e676;--green-dim:rgba(0,230,118,0.08);--orange:#ff6b35;--orange-dim:rgba(255,107,53,0.1);--white:#f0f4ff;--muted:#4a5568;--muted2:#7a8499}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--black);color:var(--white);font-family:'Space Grotesk',sans-serif;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,245,212,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,212,.02) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+.orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0}
+.orb-1{width:300px;height:300px;background:rgba(0,245,212,.05);top:-60px;right:-60px;animation:orbF 9s ease-in-out infinite}
+.orb-2{width:200px;height:200px;background:rgba(247,0,255,.04);bottom:60px;left:-30px;animation:orbF 7s ease-in-out infinite -4s}
+@keyframes orbF{0%,100%{transform:translate(0,0)}50%{transform:translate(12px,-12px)}}
+.wrap{position:relative;z-index:1;max-width:1140px;margin:0 auto;padding:16px}
+
+/* NAV */
+nav{display:flex;align-items:center;gap:6px;padding:8px 0 16px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}
+nav::-webkit-scrollbar{display:none}
+.nav-brand{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--cyan);white-space:nowrap;margin-right:6px;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.nav-brand::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 6px var(--cyan);animation:blink 2s ease infinite}
+.nav-btn{font-family:'Space Mono',monospace;font-size:9px;padding:5px 12px;border:1px solid var(--border2);border-radius:4px;background:var(--surface);color:var(--muted2);cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0}
+.nav-btn:hover,.nav-btn.active{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* SECTIONS */
+.section{display:none;animation:fadeIn .35s ease both}
+.section.visible{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* PANELS */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.panel-hd{padding:8px 14px;border-bottom:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;gap:8px}
+.panel-hd-label{font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em}
+.hd-dot{width:5px;height:5px;border-radius:50%;background:var(--cyan);margin-left:auto;animation:blink 1.8s ease infinite}
+
+/* ══ DTC ══ */
+.dtc-wrap{padding:16px}
+.search-row{display:flex;gap:8px;margin-bottom:14px}
+.dtc-input{flex:1;font-family:'Space Mono',monospace;font-size:13px;font-weight:700;text-transform:uppercase;padding:10px 14px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--cyan);outline:none;transition:border-color .2s;letter-spacing:.1em}
+.dtc-input:focus{border-color:var(--cyan);box-shadow:0 0 0 2px var(--cyan-dim)}
+.dtc-input::placeholder{color:var(--muted);font-weight:400;letter-spacing:0}
+.search-btn{font-family:'Space Mono',monospace;font-size:10px;padding:10px 16px;background:var(--cyan-dim);border:1px solid rgba(0,245,212,.3);border-radius:6px;color:var(--cyan);cursor:pointer;transition:all .2s;white-space:nowrap}
+.search-btn:hover{background:rgba(0,245,212,.18)}
+.dtc-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
+.dtc-chip{font-family:'Space Mono',monospace;font-size:9px;padding:3px 9px;border:1px solid var(--border2);border-radius:3px;color:var(--muted2);cursor:pointer;background:var(--surface2);transition:all .15s}
+.dtc-chip:hover{border-color:var(--cyan);color:var(--cyan)}
+.dtc-chip.cat-p{border-left:2px solid var(--cyan)}
+.dtc-chip.cat-c{border-left:2px solid var(--red)}
+.dtc-chip.cat-b{border-left:2px solid var(--mag)}
+.dtc-chip.cat-u{border-left:2px solid var(--yel)}
+.dtc-result{display:none}.dtc-result.show{display:block;animation:fadeIn .25s ease both}
+.dtc-card{border:1px solid var(--border2);border-radius:8px;overflow:hidden}
+.dtc-header{padding:12px 16px;background:var(--surface2);display:flex;align-items:flex-start;gap:14px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.dtc-code-big{font-family:'Space Mono',monospace;font-size:26px;font-weight:700;color:var(--cyan);text-shadow:0 0 18px rgba(0,245,212,.4);line-height:1;flex-shrink:0}
+.dtc-title{font-size:15px;font-weight:600;color:var(--white);margin-bottom:3px}
+.dtc-sub{font-size:11px;color:var(--muted2)}
+.dtc-sev{margin-left:auto;font-family:'Space Mono',monospace;font-size:8px;padding:3px 9px;border-radius:3px;border:1px solid;flex-shrink:0;align-self:flex-start}
+.sev-h{color:var(--red);border-color:rgba(255,56,96,.35);background:var(--red-dim)}
+.sev-m{color:var(--yel);border-color:rgba(255,230,0,.35);background:var(--yel-dim)}
+.sev-l{color:var(--green);border-color:rgba(0,230,118,.3);background:var(--green-dim)}
+.dtc-body{display:grid;grid-template-columns:1fr 1fr 1fr}
+@media(max-width:640px){.dtc-body{grid-template-columns:1fr}}
+.dtc-col{padding:12px 16px;border-right:1px solid var(--border)}
+.dtc-col:last-child{border-right:none}
+.dc-title{font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px}
+.dtc-col ul{list-style:none;display:flex;flex-direction:column;gap:5px}
+.dtc-col ul li{font-size:11px;color:var(--muted2);padding-left:12px;position:relative;line-height:1.45}
+.dtc-col ul li::before{content:'›';position:absolute;left:0;color:var(--cyan)}
+.dtc-col ul li strong{color:var(--white)}
+.dtc-nf{display:none;padding:20px;text-align:center;font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)}
+.dtc-nf.show{display:block}
+
+/* DTC Category Filter */
+.cat-filter{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.cat-btn{font-family:'Space Mono',monospace;font-size:9px;padding:4px 12px;border:1px solid var(--border2);border-radius:3px;cursor:pointer;transition:all .15s;background:var(--surface2);color:var(--muted2)}
+.cat-btn.active-p{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
+.cat-btn.active-c{border-color:var(--red);color:var(--red);background:var(--red-dim)}
+.cat-btn.active-b{border-color:var(--mag);color:var(--mag);background:var(--mag-dim)}
+.cat-btn.active-u{border-color:var(--yel);color:var(--yel);background:var(--yel-dim)}
+
+/* DTC Catalog */
+.dtc-catalog{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px;padding:12px;max-height:400px;overflow-y:auto}
+.dtc-catalog::-webkit-scrollbar{width:4px}
+.dtc-catalog::-webkit-scrollbar-track{background:var(--surface2)}
+.dtc-catalog::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.cat-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:5px;background:var(--surface2);cursor:pointer;transition:all .12s}
+.cat-item:hover{border-color:var(--cyan);background:var(--cyan-dim)}
+.cat-code{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;min-width:52px}
+.cc-p{color:var(--cyan)}.cc-c{color:var(--red)}.cc-b{color:var(--mag)}.cc-u{color:var(--yel)}
+.cat-desc{font-size:10px;color:var(--muted2);line-height:1.3}
+
+/* ══ FUSILERAS ══ */
+.fuse-layout{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px}
+@media(max-width:700px){.fuse-layout{grid-template-columns:1fr}}
+.fuse-box{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface2)}
+.fuse-box-title{padding:8px 12px;border-bottom:1px solid var(--border);font-family:'Space Mono',monospace;font-size:9px;color:var(--cyan);text-transform:uppercase;letter-spacing:.1em;background:var(--surface);display:flex;align-items:center;gap:8px}
+.fuse-count{margin-left:auto;font-size:8px;color:var(--muted)}
+
+/* FUSE DIAGRAM WITH REAL PHOTO */
+.fuse-photo-wrap{position:relative;display:inline-block;width:100%}
+.fuse-photo-wrap img{width:100%;height:auto;display:block;border-radius:4px;opacity:.92}
+.fuse-hotspot{position:absolute;border-radius:50%;cursor:pointer;transition:all .15s;border:2px solid transparent}
+.fuse-hotspot:hover{background:rgba(0,245,212,.35);border-color:var(--cyan);box-shadow:0 0 12px var(--cyan)}
+.fuse-hotspot.active{background:rgba(0,245,212,.4);border-color:var(--cyan);box-shadow:0 0 14px var(--cyan)}
+.fuse-hotspot.status-chk{border-color:var(--yel);background:rgba(255,230,0,.2)}
+.fuse-hotspot.status-bad{border-color:var(--red);background:rgba(255,56,96,.2)}
+.fuse-num-label{position:absolute;font-family:'Space Mono',monospace;font-size:7px;color:var(--cyan);pointer-events:none;text-shadow:0 0 4px #000;font-weight:700}
+
+/* Grid diagram fallback */
+.fuse-diagram{padding:10px;display:flex;flex-direction:column;gap:2px}
+.fuse-row{display:flex;gap:2px}
+.fuse{width:100%;min-height:36px;border-radius:3px;border:1px solid var(--border2);background:var(--surface3);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px;transition:all .15s;position:relative;overflow:hidden}
+.fuse:hover{border-color:var(--cyan);background:var(--cyan-dim);z-index:2}
+.fuse.active{border-color:var(--cyan);background:var(--cyan-dim);box-shadow:0 0 8px var(--cyan-dim)}
+.fuse.status-chk{border-color:rgba(255,230,0,.4);background:var(--yel-dim)}
+.fuse.status-bad{border-color:rgba(255,56,96,.5);background:var(--red-dim)}
+.fuse.fuse-empty{cursor:default;opacity:.2}
+.fuse-n{font-family:'Space Mono',monospace;font-size:6px;color:var(--muted);line-height:1}
+.fuse-a{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;color:var(--yel);line-height:1}
+.fuse-empty .fuse-a{color:var(--muted)}
+.fuse.is-relay{background:rgba(247,0,255,.06);border-color:rgba(247,0,255,.3)}
+.fuse.is-relay .fuse-a{color:var(--mag);font-size:7px}
+
+/* Tooltip */
+.fuse-tooltip{margin:0 12px 12px;padding:12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);display:none;animation:fadeIn .2s ease both}
+.fuse-tooltip.show{display:block}
+.ft-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.ft-num{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted)}
+.ft-comp{font-size:13px;font-weight:600;color:var(--white)}
+.ft-amp{margin-left:auto;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--yel);background:var(--yel-dim);border:1px solid rgba(255,230,0,.25);padding:2px 9px;border-radius:3px}
+.ft-desc{font-size:11px;color:var(--muted2);line-height:1.5}
+.ft-status{margin-top:6px;font-family:'Space Mono',monospace;font-size:8px;display:inline-flex;align-items:center;gap:5px;padding:2px 7px;border-radius:2px;border:1px solid}
+.fts-ok{color:var(--green);border-color:rgba(0,230,118,.3);background:var(--green-dim)}
+.fts-chk{color:var(--yel);border-color:rgba(255,230,0,.3);background:var(--yel-dim)}
+.fts-bad{color:var(--red);border-color:rgba(255,56,96,.3);background:var(--red-dim)}
+
+/* FUSE LEGEND */
+.fuse-legend{display:flex;gap:12px;padding:8px 12px;border-top:1px solid var(--border);flex-wrap:wrap}
+.fl-item{display:flex;align-items:center;gap:5px;font-family:'Space Mono',monospace;font-size:8px;color:var(--muted2)}
+.fl-dot{width:8px;height:8px;border-radius:2px;border:1px solid}
+.fl-ok{background:var(--surface3);border-color:var(--border2)}
+.fl-chk{background:var(--yel-dim);border-color:rgba(255,230,0,.4)}
+.fl-bad{background:var(--red-dim);border-color:rgba(255,56,96,.5)}
+.fl-rel{background:rgba(247,0,255,.06);border-color:rgba(247,0,255,.3)}
+
+/* ══ STORY ══ */
+.story-wrap{padding:16px}
+.story-step{display:flex;gap:14px;margin-bottom:20px}
+.step-line{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.step-dot{width:30px;height:30px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;flex-shrink:0}
+.sd-c{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
+.sd-m{border-color:var(--mag);color:var(--mag);background:var(--mag-dim)}
+.sd-y{border-color:var(--yel);color:var(--yel);background:var(--yel-dim)}
+.sd-g{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+.step-conn{width:1px;flex:1;min-height:16px;background:linear-gradient(var(--border2),transparent);margin:4px 0}
+.step-content{flex:1;padding-top:3px}
+.step-tag{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.tag-c{color:var(--cyan)}.tag-m{color:var(--mag)}.tag-y{color:var(--yel)}.tag-g{color:var(--green)}
+.step-title{font-size:14px;font-weight:600;color:var(--white);margin-bottom:5px}
+.step-body{font-size:12px;color:var(--muted2);line-height:1.6}
+.step-body strong{color:var(--white)}
+.step-body code{font-family:'Space Mono',monospace;font-size:10px;color:var(--cyan);background:var(--cyan-dim);padding:1px 5px;border-radius:2px}
+.insight{margin-top:8px;padding:10px 12px;border-left:2px solid;font-size:11px;color:var(--muted2);line-height:1.55;border-radius:0 3px 3px 0;background:var(--surface2)}
+.ic{border-color:var(--cyan)}.im{border-color:var(--mag)}.iy{border-color:var(--yel)}.ig{border-color:var(--green)}
+.analogy{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-top:10px;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:7px}
+@media(max-width:600px){.analogy{grid-template-columns:1fr}}
+.an-side{padding:8px 10px;border-radius:5px}
+.an-d{background:var(--cyan-dim);border:1px solid rgba(0,245,212,.18)}
+.an-h{background:var(--mag-dim);border:1px solid rgba(247,0,255,.18)}
+.an-lbl{font-family:'Space Mono',monospace;font-size:7px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+.al-c{color:var(--cyan)}.al-m{color:var(--mag)}
+.an-txt{font-size:11px;color:var(--white);line-height:1.4}
+.an-arrow{font-family:'Space Mono',monospace;font-size:18px;color:var(--muted);text-align:center}
+.lesson{margin-top:18px;padding:18px;background:var(--surface2);border:1px solid rgba(0,245,212,.15);border-radius:10px;border-left:3px solid var(--cyan)}
+.lesson-tag{font-family:'Space Mono',monospace;font-size:8px;color:var(--cyan);text-transform:uppercase;letter-spacing:.14em;margin-bottom:6px}
+.lesson-text{font-size:14px;color:var(--white);line-height:1.6;font-weight:500}
+.lesson-sub{font-size:11px;color:var(--muted2);margin-top:5px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="wrap">
+
+<nav>
+  <div class="nav-brand">🔧 FIESTA KD 2015</div>
+  <button class="nav-btn active" onclick="showSec('dtc')">DTC Lookup</button>
+  <button class="nav-btn" onclick="showSec('fuse')">Fusileras oficiales</button>
+  <button class="nav-btn" onclick="showSec('story')">Hardware vs Data</button>
+</nav>
+
+<!-- ══════════ DTC ══════════ -->
+<div class="section visible" id="sec-dtc">
+  <div class="panel">
+    <div class="panel-hd">
+      <span class="panel-hd-label">DTC Lookup · Ford Fiesta KD 2015 · Base completa</span>
+      <div class="hd-dot"></div>
+    </div>
+    <div class="dtc-wrap">
+      <div class="search-row">
+        <input class="dtc-input" id="dtc-in" type="text" placeholder="P0300, C0031, B1342, U0100..." maxlength="7" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')" onkeydown="if(event.key==='Enter')doSearch()">
+        <button class="search-btn" onclick="doSearch()">BUSCAR →</button>
+      </div>
+      <div class="cat-filter">
+        <button class="cat-btn" id="f-all" onclick="filterCat('all')">Todos</button>
+        <button class="cat-btn" id="f-p" onclick="filterCat('P')">P — Motor/Transmisión</button>
+        <button class="cat-btn" id="f-c" onclick="filterCat('C')">C — Chasis/ABS</button>
+        <button class="cat-btn" id="f-b" onclick="filterCat('B')">B — Carrocería</button>
+        <button class="cat-btn" id="f-u" onclick="filterCat('U')">U — Red CAN</button>
+      </div>
+      <div class="dtc-chips" id="dtc-chips"></div>
+      <div class="dtc-result" id="dtc-result">
+        <div class="dtc-card">
+          <div class="dtc-header">
+            <div class="dtc-code-big" id="r-code"></div>
+            <div><div class="dtc-title" id="r-title"></div><div class="dtc-sub" id="r-sub"></div></div>
+            <div class="dtc-sev" id="r-sev"></div>
+          </div>
+          <div class="dtc-body">
+            <div class="dtc-col"><div class="dc-title">Causas probables</div><ul id="r-causes"></ul></div>
+            <div class="dtc-col"><div class="dc-title">Diagnóstico</div><ul id="r-diag"></ul></div>
+            <div class="dtc-col"><div class="dc-title">Solución</div><ul id="r-fix"></ul></div>
+          </div>
+        </div>
+      </div>
+      <div class="dtc-nf" id="dtc-nf">Código no encontrado. Probá con otro o consultá el manual EOBD Ford.</div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-hd"><span class="panel-hd-label">Catálogo completo — clic para ver detalle</span></div>
+    <div class="dtc-catalog" id="dtc-cat"></div>
+  </div>
+</div>
+
+<!-- ══════════ FUSILERAS ══════════ -->
+<div class="section" id="sec-fuse">
+
+  <div class="panel">
+    <div class="panel-hd">
+      <span class="panel-hd-label">Fusileras Ford Fiesta · Manual oficial Ford · tocá cada fusible para ver detalle</span>
+      <div class="hd-dot"></div>
+    </div>
+
+    <!-- TABS para alternar entre cajas -->
+    <div style="display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid var(--border);background:var(--surface2)">
+      <button class="nav-btn active" id="tab-motor" onclick="switchFuseTab('motor')">Caja del motor (BJB)</button>
+      <button class="nav-btn" id="tab-hab" onclick="switchFuseTab('hab')">Habitáculo (CJB)</button>
+    </div>
+
+    <!-- CAJA MOTOR -->
+    <div id="fuse-panel-motor" style="padding:12px">
+      <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.1em">
+        Caja de fusibles del vano motor · Ford Fiesta KD · fuente: manual oficial Ford
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
+        <!-- FOTO con hotspots -->
+        <div>
+          <div class="fuse-photo-wrap" id="bjb-photo-wrap">
+            <img src="https://www.fordservicecontent.dealerconnection.com/images/imagen/imagen2.dll?w=600&id=E113002_EUR&t=JPG"
+                 alt="Caja de fusibles del motor - Ford Fiesta"
+                 style="width:100%;border-radius:6px;border:1px solid var(--border2)"
+                 id="bjb-img"
+                 onload="renderBJBHotspots()"
+                 onerror="this.parentElement.innerHTML='<div style=\'padding:20px;text-align:center;font-size:11px;color:var(--muted)\'>Imagen no disponible offline<br>Conectate a internet para ver el diagrama oficial</div>'">
+          </div>
+          <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);margin-top:4px;text-align:center">
+            © Ford Motor Company · Manual del propietario
+          </div>
+        </div>
+        <!-- TABLA rápida -->
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Referencia rápida</div>
+          <div style="max-height:420px;overflow-y:auto;font-size:11px" id="bjb-table"></div>
+        </div>
+      </div>
+
+      <!-- Tooltip -->
+      <div class="fuse-tooltip" id="tt-bjb" style="margin-top:10px">
+        <div class="ft-header">
+          <span class="ft-num" id="tt-bjb-num"></span>
+          <span class="ft-comp" id="tt-bjb-comp"></span>
+          <span class="ft-amp" id="tt-bjb-amp"></span>
+        </div>
+        <div class="ft-desc" id="tt-bjb-desc"></div>
+        <span class="ft-status" id="tt-bjb-st"></span>
+      </div>
+    </div>
+
+    <!-- CAJA HABITÁCULO -->
+    <div id="fuse-panel-hab" style="padding:12px;display:none">
+      <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.1em">
+        Caja de fusibles del interior del vehículo · detrás de la guantera
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
+        <div>
+          <div class="fuse-photo-wrap" id="cjb-photo-wrap">
+            <img src="https://www.fordservicecontent.dealerconnection.com/images/imagen/imagen2.dll?w=600&id=E125748_EUR&t=JPG"
+                 alt="Caja de fusibles del habitáculo - Ford Fiesta"
+                 style="width:100%;border-radius:6px;border:1px solid var(--border2)"
+                 id="cjb-img"
+                 onload="renderCJBHotspots()"
+                 onerror="this.parentElement.innerHTML='<div style=\'padding:20px;text-align:center;font-size:11px;color:var(--muted)\'>Imagen no disponible offline</div>'">
+          </div>
+          <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);margin-top:4px;text-align:center">
+            © Ford Motor Company · Manual del propietario
+          </div>
+        </div>
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Referencia rápida</div>
+          <div style="max-height:420px;overflow-y:auto;font-size:11px" id="cjb-table"></div>
+        </div>
+      </div>
+      <div class="fuse-tooltip" id="tt-cjb" style="margin-top:10px">
+        <div class="ft-header">
+          <span class="ft-num" id="tt-cjb-num"></span>
+          <span class="ft-comp" id="tt-cjb-comp"></span>
+          <span class="ft-amp" id="tt-cjb-amp"></span>
+        </div>
+        <div class="ft-desc" id="tt-cjb-desc"></div>
+        <span class="ft-status" id="tt-cjb-st"></span>
+      </div>
+    </div>
+
+    <div class="fuse-legend">
+      <div class="fl-item"><div class="fl-dot fl-ok"></div>Normal</div>
+      <div class="fl-item"><div class="fl-dot fl-chk"></div>Revisar</div>
+      <div class="fl-item"><div class="fl-dot fl-bad"></div>Falla activa</div>
+      <div class="fl-item"><div class="fl-dot fl-rel"></div>Relay</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════ STORY ══════════ -->
+<div class="section" id="sec-story">
+  <div class="panel">
+    <div class="panel-hd"><span class="panel-hd-label">Hardware vs Data · Caso ABS real · Fiesta KD 2015</span></div>
+    <div class="story-wrap">
+
+      <div class="story-step">
+        <div class="step-line"><div class="step-dot sd-c">01</div><div class="step-conn"></div></div>
+        <div class="step-content">
+          <div class="step-tag tag-c">// síntoma inicial · data layer</div>
+          <div class="step-title">El dashboard miente… o eso parecía</div>
+          <div class="step-body">El scanner OBD reportó código <code>C0031</code> — sensor de velocidad rueda delantera izquierda. Lecturas intermitentes, señal errática. Primera hipótesis obvia: <strong>falla de sensor, cableado dañado o módulo ABS</strong>. Todo apuntaba a un problema de datos.</div>
+          <div class="insight ic">En datos diríamos: "el KPI está rojo, el source system tiene un problema". La métrica está fallando → el origen también debe estar fallando. Lógica razonable. Casi siempre equivocada.</div>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <div class="step-line"><div class="step-dot sd-m">02</div><div class="step-conn"></div></div>
+        <div class="step-content">
+          <div class="step-tag tag-m">// capa física · hardware layer</div>
+          <div class="step-title">Ruido metálico al frenar: la pista que el scanner no ve</div>
+          <div class="step-body">Más allá del código, había un síntoma físico claro: <strong>ruido metálico al frenar a baja velocidad</strong>, exactamente donde el ABS se activa para prevenir bloqueo de rueda. El sistema de frenos generaba vibración suficiente para interferir con la lectura del sensor.</div>
+          <div class="insight im">El equivalente en BI: el KPI roto no es porque el ETL falló, sino porque <strong>el proceso de negocio upstream está roto</strong>. El problema no es el dato, es la realidad que lo genera.</div>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <div class="step-line"><div class="step-dot sd-y">03</div><div class="step-conn"></div></div>
+        <div class="step-content">
+          <div class="step-tag tag-y">// diagnóstico diferencial · la checklist</div>
+          <div class="step-title">Pastillas al límite: la causa raíz estaba en el hardware</div>
+          <div class="step-body">Inspección física del conjunto delantero izquierdo: <strong>pastillas al límite del desgaste</strong>, indicador metálico rozando el disco. Al frenar, la vibración irregular perturbaba la rueda dentada del sensor ABS, generando pulsos erróneos que el módulo interpretaba como falla de sensor.</div>
+          <div class="analogy">
+            <div class="an-side an-d"><div class="an-lbl al-c">En datos</div><div class="an-txt">KPI de rentabilidad cae → asumís bug en DAX → revisás medidas, filtros, relaciones</div></div>
+            <div class="an-arrow">↔</div>
+            <div class="an-side an-h"><div class="an-lbl al-m">En el auto</div><div class="an-txt">Código C0031 → asumís sensor malo → comprás sensor, revisás cableado</div></div>
+          </div>
+          <div class="insight iy" style="margin-top:10px"><strong style="color:var(--yel)">La trampa en ambos casos:</strong> ir directo a la capa de datos sin validar la capa física. Pastillas $25.000 vs sensor ABS $80.000+. El diagnóstico diferencial correcto ahorra tiempo y plata.</div>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <div class="step-line"><div class="step-dot sd-g">04</div></div>
+        <div class="step-content">
+          <div class="step-tag tag-g">// root cause fix · resolución</div>
+          <div class="step-title">Cambio de pastillas + discos → C0031 desaparece</div>
+          <div class="step-body">Cambio de pastillas y discos delanteros. Borrado de DTCs. <strong>Código C0031 no regresa</strong>. La señal del sensor es limpia porque la fuente del ruido físico fue eliminada. El sensor nunca estuvo roto.</div>
+          <div class="insight ig">En datos: corregiste el proceso upstream → el KPI se normaliza solo, sin tocar una línea de DAX. El modelo siempre estuvo bien. El problema era la realidad que lo alimentaba.</div>
+        </div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-tag">// lección universal</div>
+        <div class="lesson-text">Antes de culpar al dato, validá la realidad que lo genera.</div>
+        <div class="lesson-sub">Aplica igual cuando el scanner dice "sensor roto" que cuando el dashboard dice "el modelo tiene un bug". La capa de datos refleja la realidad — si la realidad está rota, el dato también va a estarlo. <strong>Primero revisá el hardware.</strong></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+// ══════════════════════════════════════════════
+//  DTC DATABASE — Ford Fiesta KD 2015 — Completo
+// ══════════════════════════════════════════════
+const DTC = {
+  // ── POWERTRAIN (P) ──
+  'P0016':{ t:'Correlación posición cigüeñal/árbol levas banco 1', s:'Motor · distribución · Ti-VCT', sev:'HIGH', cat:'P',
+    causes:['Cadena de distribución con juego o diente saltado','Sensor CKP o CMP fallado','Actuador VCT con aceite contaminado','Bajo nivel de aceite de motor'],
+    diag:['Verificar timing marks con motor frío','Medir presión de aceite (mín. 1.5 bar en ralentí)','Escuchar ruido de cadena en arranque frío','Leer PIDs de ángulo de VCT en vivo'],
+    fix:['Cambiar aceite y filtro primero (costo bajo)','Reemplazar actuador VCT si el ángulo no responde','Revisión de cadena, tensores y guías si hay ruido']},
+  'P0030':{ t:'Circuito calentador sonda lambda banco 1 sensor 1', s:'Emisiones · sonda O2 upstream', sev:'MED', cat:'P',
+    causes:['Sonda lambda con calentador fundido','Fusible de sonda fundido (F20/F33 motor)','Cableado con corte en circuito de calentador'],
+    diag:['Medir resistencia calentador: 3–30 Ω','Verificar 12V en pin de alimentación con clave puesta','Verificar masa del sensor'],
+    fix:['Reemplazar sonda O2 upstream (OEM recomendado)','Verificar fusible F20 en caja motor','Reparar cableado si hay corte visible']},
+  'P0100':{ t:'Circuito sensor MAF — mal funcionamiento', s:'Admisión de aire · sensor de caudal', sev:'HIGH', cat:'P',
+    causes:['Sensor MAF sucio o contaminado','Conector del MAF con corrosión o pin suelto','Manguera de admisión fisurada (entrada de aire no medida)','Sensor MAF defectuoso'],
+    diag:['Leer PID de caudal MAF en vivo (en ralentí: 2–5 g/s)','Inspeccionar manguera de admisión completa','Limpiar sensor con spray MAF específico'],
+    fix:['Limpiar MAF con spray específico (no usar limpiador universal)','Sellar fisuras de manguera de admisión','Reemplazar MAF si sigue sin responder']},
+  'P0102':{ t:'Sensor MAF — señal baja', s:'Admisión · bajo caudal registrado', sev:'MED', cat:'P',
+    causes:['MAF sucio (señal baja = subregistro)','Filtro de aire obstruido','Conector MAF con resistencia alta'],
+    diag:['Caudal en ralentí: debe ser >2 g/s','Inspeccionar filtro de aire','Medir tensión de señal: 0.5–4.5V'],
+    fix:['Cambiar filtro de aire','Limpiar MAF','Reemplazar sensor si la señal sigue baja']},
+  'P0113':{ t:'Sensor IAT — señal alta (temperatura de admisión)', s:'Sensor temperatura de aire', sev:'LOW', cat:'P',
+    causes:['Sensor IAT con circuito abierto','Conector oxidado o desconectado','Sensor IAT defectuoso'],
+    diag:['Medir resistencia IAT a 20°C: ~2.5 kΩ','Verificar conexión del conector'],
+    fix:['Reemplazar sensor IAT (integrado en MAF en este motor)','Limpiar conector con limpiador eléctrico']},
+  'P0128':{ t:'Termostato — temperatura de motor baja (subenfriamiento)', s:'Gestión térmica del motor', sev:'MED', cat:'P',
+    causes:['Termostato abierto permanentemente','Sonda ECT con lectura baja desviada','Termostato de apertura temprana'],
+    diag:['Verificar temperatura de operación en scanner: debe llegar a 87–95°C','Si la temp no sube en 10 min: termostato abierto'],
+    fix:['Reemplazar termostato (parte económica, no ignorar — afecta consumo)','Verificar ECT si termostato nuevo no resuelve']},
+  'P0171':{ t:'Sistema combustible demasiado pobre — banco 1', s:'Mezcla aire/combustible lean', sev:'MED', cat:'P',
+    causes:['Manguera de vacío rota o fisura en admisión','Sensor MAF sucio (subregistra caudal)','Sonda lambda upstream con respuesta lenta','Bomba de nafta débil','Inyectores sucios o tapados'],
+    diag:['Inspeccionar TODAS las mangueras de vacío','Limpiar MAF','Verificar lectura lambda en tiempo real','Test de presión de bomba: mín. 3.2 bar en clave puesta'],
+    fix:['Sellado de mangueras fisuradas','Limpieza MAF','Reemplazar sonda O2 si está lenta','Bomba de nafta si presión es baja']},
+  'P0172':{ t:'Sistema combustible demasiado rico — banco 1', s:'Mezcla aire/combustible rich', sev:'MED', cat:'P',
+    causes:['Inyector con fuga interna (goteo en reposo)','Sensor MAP con sobrepresión','Sonda lambda con señal alta fija','Presión de combustible muy alta'],
+    diag:['Test de inyectores: apagar motor y verificar que no haya aumento de presión en riel','Verificar lectura de sonda en vivo'],
+    fix:['Limpieza ultrasónica de inyectores','Reemplazar regulador de presión si presión es alta','Sonda O2 si señal es fija alta']},
+  'P0261':{ t:'Circuito inyector cilindro 1 — voltaje bajo', s:'Sistema de inyección · cilindro 1', sev:'HIGH', cat:'P',
+    causes:['Inyector con cortocircuito interno','Cableado del inyector con corte a masa','Módulo de control de inyectores dañado'],
+    diag:['Medir resistencia inyector: 11–18 Ω','Verificar continuidad del cableado','Swap del conector con otro cilindro y ver si el error migra'],
+    fix:['Reemplazar inyector si tiene cortocircuito','Reparar cableado si hay corte a masa','No reemplazar módulo sin confirmar falla de inyector']},
+  'P0300':{ t:'Falla de encendido aleatoria — múltiples cilindros', s:'Sistema de encendido · misfire', sev:'HIGH', cat:'P',
+    causes:['Bujías desgastadas (intervalo: 60.000 km NGK)','Bobinas de encendido defectuosas','Inyectores sucios','Compresión baja en algún cilindro','Cadena de distribución con desfase'],
+    diag:['Leer freeze frame: RPM y carga al momento del misfire','Test individual de cilindros desconectando bobinas','Compresión: mín. 11 bar por cilindro','Verificar señal de CKP y CMP'],
+    fix:['Cambio de bujías (NGK — costo mínimo, empezar aquí siempre)','Bobinas si el misfire migra con swap','Limpieza de inyectores','Compresión baja → tapa de cilindros o distribución']},
+  'P0301':{ t:'Falla de encendido — cilindro 1', s:'Misfire específico cilindro 1', sev:'HIGH', cat:'P',
+    causes:['Bujía fouled o desgastada en cil. 1','Bobina de encendido cil. 1','Inyector cil. 1','Compresión baja cil. 1'],
+    diag:['Swap de bobina cil. 1 con cil. 2: si migra a P0302 → bobina','Revisar bujía cil. 1','Test de compresión cil. 1'],
+    fix:['Bujía primera (costo mínimo)','Bobina si el código migra','Inyector si compresión y bobina están OK']},
+  'P0302':{ t:'Falla de encendido — cilindro 2', s:'Misfire específico cilindro 2', sev:'HIGH', cat:'P',
+    causes:['Bujía/bobina/inyector/compresión en cil. 2'], diag:['Mismo proceso que P0301 para cil. 2'], fix:['Mismo proceso que P0301 para cil. 2']},
+  'P0304':{ t:'Falla de encendido — cilindro 4', s:'Misfire específico cilindro 4', sev:'HIGH', cat:'P',
+    causes:['Bujía/bobina/inyector/compresión en cil. 4'], diag:['Mismo proceso que P0301 para cil. 4'], fix:['Mismo proceso que P0301 para cil. 4']},
+  'P0315':{ t:'Sistema de diagnóstico misfire — no aprendido', s:'Adaptación de encendido', sev:'LOW', cat:'P',
+    causes:['Ciclo de manejo insuficiente post-borrado de DTCs','Sensor CKP sin rueda reluctora correcta'],
+    diag:['Realizar ciclo de manejo completo (autoroute, ciudad, ralentí)'],
+    fix:['No requiere reparación si P0300 no está presente — completar ciclo de manejo']},
+  'P0335':{ t:'Sensor de posición de cigüeñal CKP — circuito A', s:'Sincronización de motor · arranque', sev:'HIGH', cat:'P',
+    causes:['Sensor CKP defectuoso','Rueda reluctora con diente dañado o sucia','Cableado con corte o sin masa','Entrehierro sensor/rueda incorrecto'],
+    diag:['Verificar 5V de referencia en pin A del conector','Verificar masa en pin B','Medir resistencia: 200–900 Ω','Inspeccionar rueda reluctora (60-2 dientes)'],
+    fix:['Limpiar rueda reluctora con desengrasante','Reemplazar sensor CKP','Reparar cableado si hay corte']},
+  'P0340':{ t:'Sensor de posición árbol de levas CMP — circuito A banco 1', s:'Sincronización de motor', sev:'HIGH', cat:'P',
+    causes:['Sensor CMP defectuoso','Rueda reluctora de árbol de levas dañada','Cableado sin tensión de referencia','Cadena de distribución desfasada'],
+    diag:['Verificar 5V en pin de referencia','Medir señal en vivo: onda cuadrada 0–5V','Verificar sincronismo con scanner'],
+    fix:['Reemplazar sensor CMP si no hay señal con alimentación correcta','Verificar distribución si el ángulo de sincronismo es incorrecto']},
+  'P0380':{ t:'Circuito bujía de precalentamiento — grupo A', s:'Sistema de arranque frío (diesel / CNG)', sev:'MED', cat:'P',
+    causes:['Bujía de precalentamiento fundida','Relé de precalentamiento defectuoso','Cableado sin alimentación'],
+    diag:['Resistencia bujía: < 1 Ω (cortocircuito = fundida)','Verificar alimentación del relé'],
+    fix:['Reemplazar bujía de precalentamiento defectuosa','Reemplazar relé si no conmuta']},
+  'P0400':{ t:'Flujo del sistema EGR — mal funcionamiento', s:'Sistema de recirculación de gases EGR', sev:'MED', cat:'P',
+    causes:['Válvula EGR con carbón y atascada','Circuito de vacío EGR roto','Sensor de posición EGR fallado'],
+    diag:['Verificar movimiento de válvula con scanner (actuación forzada)','Verificar señal del sensor de posición EGR'],
+    fix:['Limpieza de válvula EGR con producto específico','Reemplazar válvula si no se puede limpiar','Verificar vacío del circuito de control']},
+  'P0420':{ t:'Eficiencia del catalizador por debajo del umbral banco 1', s:'Sistema de escape · catalizador', sev:'MED', cat:'P',
+    causes:['Catalizador agotado (vida útil superada ~120.000 km)','Contaminación por aceite o refrigerante','Sonda lambda downstream con respuesta igual a upstream','Daño por misfire previo'],
+    diag:['Comparar señales O2 upstream vs downstream en vivo','Si ambas oscilan igual: catalizador agotado','Verificar consumo de aceite del motor'],
+    fix:['Reemplazar catalizador','Verificar causa raíz antes de instalar uno nuevo','Controlar motor por consumo de aceite']},
+  'P0442':{ t:'Sistema de evaporación EVAP — fuga pequeña detectada', s:'Sistema de control de evaporación de combustible', sev:'LOW', cat:'P',
+    causes:['Tapa de combustible mal cerrada o deteriorada','Manguera de canister fisurada','Válvula de purga del canister defectuosa'],
+    diag:['Verificar tapa de combustible primero (causa más común)','Inspeccionar mangueras del canister','Test de humo del sistema EVAP'],
+    fix:['Cerrar o reemplazar tapa de combustible','Reemplazar mangueras si hay fisuras','Canister o válvula de purga si sigue el código']},
+  'P0455':{ t:'Sistema EVAP — fuga grande detectada', s:'Control de evaporación · fuga masiva', sev:'MED', cat:'P',
+    causes:['Tapa de combustible abierta o rota','Manguera del EVAP desconectada','Canister saturado o dañado'],
+    diag:['Verificar tapa primero','Test de presión del sistema EVAP','Inspeccionar todo el circuito de mangueras'],
+    fix:['Tapa de combustible nueva','Reconectar/reemplazar manguera desconectada','Canister si persiste']},
+  'P0480':{ t:'Circuito del ventilador de refrigeración 1 — mal funcionamiento', s:'Sistema de refrigeración del motor', sev:'MED', cat:'P',
+    causes:['Relé del ventilador defectuoso','Motor del ventilador fundido','Cableado sin alimentación o masa','ECU sin señal de control'],
+    diag:['Verificar relé R5 en caja motor','Verificar alimentación del motor del ventilador','Medir resistencia del motor: 2–6 Ω'],
+    fix:['Reemplazar relé (costo mínimo, empezar aquí)','Reemplazar motor si relé está OK','Verificar cableado si ni relé ni motor son el problema']},
+  'P0500':{ t:'Sensor de velocidad vehicular VSS — mal funcionamiento', s:'Control de velocidad / tacómetro', sev:'MED', cat:'P',
+    causes:['Sensor VSS defectuoso','Cableado dañado','Engranaje del odómetro desgastado (en cajas mecánicas)'],
+    diag:['Verificar señal VSS en vivo con scanner','Comparar con velocidad real del vehículo'],
+    fix:['Reemplazar sensor VSS','Verificar continuidad de cableado']},
+  'P0601':{ t:'Módulo de control del motor PCM — error de memoria interna', s:'ECU · módulo principal', sev:'HIGH', cat:'P',
+    causes:['PCM con memoria ROM corrupta','Actualización de software incompleta','Pérdida de alimentación durante grabación'],
+    diag:['KAM reset: desconectar batería 30 min y verificar','Reprogramar con Ford IDS si persiste'],
+    fix:['KAM reset como primer paso','Reprogramación del PCM con IDS','Reemplazo del PCM como último recurso']},
+  'P0605':{ t:'Módulo de control del motor — error de ROM de solo lectura', s:'ECU · integridad de software', sev:'HIGH', cat:'P',
+    causes:['Firmware corrupto','Actualización interrumpida','PCM defectuoso'],
+    diag:['Reprogramar con Ford IDS/FDRS','Verificar voltaje de batería durante la programación (mín. 12.5V)'],
+    fix:['Reprogramación completa del PCM','Reemplazo si la reprogramación falla']},
+  'P1000':{ t:'Test de readiness OBD-II no completado', s:'Sistema OBD · monitores de emisiones', sev:'LOW', cat:'P',
+    causes:['DTCs borrados recientemente','Batería desconectada','Ciclo de manejo insuficiente post-reset'],
+    diag:['Realizar ciclo de manejo completo para completar los monitores EOBD'],
+    fix:['No requiere reparación — completar ciclo de manejo (ciudad + autopista + ralentí)']},
+  'P1130':{ t:'Límite adaptativo de combustible — sonda upstream banco 1', s:'Mezcla adaptativa · largo plazo', sev:'MED', cat:'P',
+    causes:['Sonda lambda upstream con respuesta lenta','Sistema en límite de compensación lean/rich','Posible entrada de aire no medida'],
+    diag:['Verificar fuel trim de largo plazo: si es >+25% hay fuga de aire','Leer respuesta de sonda en vivo'],
+    fix:['Buscar fugas de vacío','Reemplazar sonda O2 si está lenta','Verificar MAF']},
+  'P1233':{ t:'Bomba de combustible desactivada o sin comunicación', s:'Sistema de combustible', sev:'HIGH', cat:'P',
+    causes:['Módulo de control de bomba de combustible defectuoso','Relé R13 de bomba fallado','Fusible F11 (fuel system, 30A BJB) fundido'],
+    diag:['Verificar fusible F11 (30A) en caja motor','Verificar relé R13','Medir voltaje en conector de bomba con clave puesta'],
+    fix:['Fusible primero','Relé segundo','Módulo FP o bomba si los anteriores están OK']},
+  'P1549':{ t:'Presión de combustible reducida — modo de emergencia', s:'Inyección directa de combustible', sev:'HIGH', cat:'P',
+    causes:['Bomba de alta presión (HPP) con desgaste','Válvula reguladora de presión de riel fallada','Baja presión de bomba eléctrica de alimentación','Aceite de motor contaminado (afecta HPP)'],
+    diag:['Medir presión de riel en tiempo real (rango: 25–150 bar en GDI)','Verificar presión de bomba baja (alimentación)'],
+    fix:['Cambio de aceite si está contaminado','Reemplazar bomba de alta presión','Verificar regulador de presión de riel']},
+
+  // ── CHASSIS (C) ──
+  'C0031':{ t:'Sensor velocidad rueda delantera izquierda — señal fuera de rango', s:'Sistema ABS/ESC · CASO REAL documentado', sev:'HIGH', cat:'C',
+    causes:['<strong>Pastillas al límite generando vibración (CASO REAL en este Fiesta)</strong>','Sensor ABS defectuoso o contaminado','Rueda dentada del ABS dañada o sucia','Entrehierro sensor/rueda incorrecto (max. 1.5mm)','Cableado dañado o conector oxidado'],
+    diag:['<strong>PRIMERO: revisar pastillas y discos delanteros</strong>','Medir resistencia sensor: 800–1.400 Ω','Verificar señal en vivo con osciloscopio','Entrehierro: max. 1.5mm'],
+    fix:['Cambiar pastillas + discos si están al límite','Limpiar sensor y rueda dentada','Reemplazar sensor solo si señal sigue errática post-frenos','Verificar continuidad de cableado']},
+  'C0035':{ t:'Sensor velocidad rueda delantera derecha', s:'Sistema ABS/ESC · lado derecho', sev:'HIGH', cat:'C',
+    causes:['Sensor ABS dañado','Rueda dentada sucia o dañada','Cableado corroído','Desgaste de pastillas (igual que C0031)'],
+    diag:['Inspección física sensor y entrehierro','Resistencia: 800–1.400 Ω','Revisar frenos en paralelo'],
+    fix:['Revisar frenos delanteros primero','Limpiar o reemplazar sensor','Reparar cableado']},
+  'C0040':{ t:'Sensor velocidad rueda trasera izquierda', s:'Sistema ABS/ESC · rueda trasera izq', sev:'HIGH', cat:'C',
+    causes:['Sensor ABS trasero fallado','Rueda dentada trasera dañada','Rodamiento trasero con juego excesivo (afecta señal)'],
+    diag:['Medir resistencia sensor trasero: 800–1.400 Ω','Verificar juego del rodamiento','Inspeccionar rueda dentada en eje trasero'],
+    fix:['Reemplazar sensor si resistencia fuera de rango','Reemplazar rodamiento si hay juego']},
+  'C0045':{ t:'Sensor velocidad rueda trasera derecha', s:'Sistema ABS/ESC · rueda trasera der', sev:'HIGH', cat:'C',
+    causes:['Sensor ABS trasero fallado','Rueda dentada trasera dañada','Rodamiento con juego'],
+    diag:['Mismos pasos que C0040 para rueda trasera derecha'],
+    fix:['Reemplazar sensor o rodamiento según diagnóstico']},
+  'C0120':{ t:'Circuito de la válvula de modulación de presión ABS', s:'Módulo hidráulico ABS/ESC', sev:'HIGH', cat:'C',
+    causes:['Módulo hidráulico ABS defectuoso','Cableado de solenoides dañado','Fusible F1 (60A ABS, BJB) fundido'],
+    diag:['Verificar fusible F1 en caja motor','Verificar alimentación del módulo ABS','Test de actuación de solenoides con scanner'],
+    fix:['Fusible F1 primero','Módulo hidráulico si los solenoides no responden']},
+  'C0186':{ t:'Sensor de desaceleración lateral — señal incorrecta', s:'Sistema ESC/ESP · acelerómetro', sev:'MED', cat:'C',
+    causes:['Sensor de inercia lateral defectuoso','Montaje del sensor incorrecto (calibración de nivel)','Módulo ABS/ESP sin calibración post-reemplazo'],
+    diag:['Verificar calibración del sensor de inercia con scanner (debe ser 0 en superficie plana)','Verificar montaje correcto'],
+    fix:['Calibrar sensor de inercia con Ford IDS','Reemplazar sensor si la calibración no lo corrige']},
+  'C0569':{ t:'Modo de operación inválido del sistema ESC', s:'Control electrónico de estabilidad', sev:'MED', cat:'C',
+    causes:['Pérdida de alimentación del módulo ESC','Calibración interna del módulo perdida','Configuración del vehículo incorrecta en el módulo'],
+    diag:['Reinicializar módulo ABS/ESC con scanner','Verificar alimentación del módulo'],
+    fix:['Reinicializar con Ford IDS','Reemplazar módulo si persiste la configuración inválida']},
+
+  // ── BODY (B) ──
+  'B1342':{ t:'Módulo de control — falla interna ECU/BCM', s:'Módulo de carrocería / GEM', sev:'MED', cat:'B',
+    causes:['Módulo con memoria corrupta','Tensión de batería inestable durante codificación','Actualización de software incompleta','Condensador interno fallado'],
+    diag:['Verificar tensión de batería: mín. 12.4V en reposo','KAM reset: batería desconectada 30 min','Verificar si el código regresa post-reset'],
+    fix:['KAM reset como primer paso','Cargar batería completamente','Reprogramar con Ford IDS si persiste','Reparación de módulo (servicio especializado)']},
+  'B1526':{ t:'Circuito del motor del elevavidrios — falla', s:'Sistema de elevavidrios eléctricos', sev:'LOW', cat:'B',
+    causes:['Motor de elevavidrios bloqueado mecánicamente','Fusible de elevavidrios fundido (F31/F34, 30A CJB)','Módulo de control de ventanas defectuoso'],
+    diag:['Verificar fusibles F31 y F34 en CJB','Probar motor con alimentación directa','Verificar si el cableado tiene continuidad'],
+    fix:['Fusibles primero','Motor si tiene alimentación pero no gira','Módulo si todos los motores fallan simultáneamente']},
+  'B1600':{ t:'Sistema PATS — clave no programada / no reconocida', s:'Sistema antirrobo pasivo', sev:'HIGH', cat:'B',
+    causes:['Llave no programada o borrada','Módulo PATS con memoria corrupta','Cableado de la antena de transponder dañado'],
+    diag:['Verificar si la llave tiene chip transponder','Intentar con llave maestra','Leer módulo PATS con scanner específico Ford'],
+    fix:['Reprogramar llave con Ford IDS','Reemplazar módulo PATS si la antena está OK','Reemplazar antena si el módulo no lee la llave']},
+  'B1676':{ t:'Voltaje de batería — fuera de rango', s:'Sistema eléctrico · batería principal', sev:'MED', cat:'B',
+    causes:['Batería débil o descargada','Alternador con falla de carga','Fusible de alternador (F-ALT, 60A BJB) fundido','Conexión de batería oxidada o floja'],
+    diag:['Medir voltaje en batería: mín. 12.4V en reposo, 13.8–14.4V con motor en marcha','Verificar corriente de carga del alternador','Inspeccionar terminales de batería'],
+    fix:['Recargar o reemplazar batería','Reparar alternador si la carga es baja','Limpiar terminales si hay oxidación']},
+  'B2103':{ t:'Falla de la antena del sistema de entrada sin llave', s:'Sistema RKE / cierre centralizado', sev:'LOW', cat:'B',
+    causes:['Módulo de antena RKE defectuoso','Cableado de antena con corte','Interferencia de alta frecuencia'],
+    diag:['Verificar señal con llave de repuesto','Verificar continuidad de cableado de antena'],
+    fix:['Reemplazar módulo de antena','Reparar cableado de antena']},
+
+  // ── NETWORK (U) ──
+  'U0001':{ t:'CAN Bus de alta velocidad — falla de comunicación', s:'Red CAN · comunicación entre módulos', sev:'HIGH', cat:'U',
+    causes:['Cortocircuito entre CAN H y CAN L','Resistencia terminal incorrecta (debe ser 60Ω entre H y L)','Módulo desconectado o fallando activo en la red','Cableado CAN dañado'],
+    diag:['Medir resistencia CAN entre H y L (desconectado de batería): debe ser 60Ω','Si es 120Ω: solo un terminador activo','Si es <30Ω: cortocircuito entre H y L','Aislar módulos uno a uno'],
+    fix:['Reparar cortocircuito en cableado CAN','Reemplazar módulo que no responde al diagnóstico','Verificar terminadores de resistencia en el bus']},
+  'U0100':{ t:'Pérdida de comunicación con ECM/PCM', s:'Red CAN · módulo de motor', sev:'HIGH', cat:'U',
+    causes:['ECU principal sin alimentación o masa','Fusible F8 (60A PCM, BJB) fundido','Conector de ECU oxidado o mal asentado','Red CAN con cortocircuito'],
+    diag:['Verificar fusible F8 (60A) en caja motor','Medir resistencia CAN: 60Ω entre H y L','Verificar tensión de alimentación del PCM','Inspeccionar conector de ECU'],
+    fix:['Fusible F8 primero','Limpiar conector de ECU','Reparar cableado CAN si hay corto','Reemplazar ECU como último recurso']},
+  'U0121':{ t:'Pérdida de comunicación con módulo de control ABS', s:'Red CAN · módulo ABS/ESC', sev:'HIGH', cat:'U',
+    causes:['Módulo ABS sin alimentación (fusible F1 BJB)','Conector del módulo ABS desconectado','CAN Bus con interferencia o cortocircuito'],
+    diag:['Verificar fusible F1 (60A) en caja motor','Verificar alimentación del módulo ABS','Medir resistencia CAN'],
+    fix:['Fusible F1 primero','Reconectar o limpiar conector ABS','Reparar CAN Bus']},
+  'U0155':{ t:'Pérdida de comunicación con el cuadro de instrumentos', s:'Red CAN · panel de instrumentos', sev:'MED', cat:'U',
+    causes:['Módulo de instrumentos sin alimentación (fusible F3/F19 CJB)','Conector de instrumentos flojo','Falla en el módulo de instrumentos'],
+    diag:['Verificar fusibles F3 y F19 en CJB','Verificar conector trasero del cuadro de instrumentos'],
+    fix:['Fusibles primero','Reconectar conector','Reemplazar módulo si falla internamente']},
+  'U1900':{ t:'CAN Bus — error de recepción / timeout', s:'Red CAN · comunicación general', sev:'MED', cat:'U',
+    causes:['Interferencia en la red CAN','Módulo enviando datos erróneos','Cableado CAN con resistencia alta'],
+    diag:['Nota: códigos U1900 pueden aparecer sin falla real (común post-diagnóstico)','Verificar si otros módulos también tienen U-codes','Medir resistencia CAN'],
+    fix:['Borrar códigos y verificar si regresan','Si persisten: diagnóstico de red CAN con Ford IDS','No reemplazar módulos solo por U-codes']},
+};
+
+// ══════════════════════════════════════════════
+//  FUSILERAS — datos oficiales del manual Ford ESP
+// ══════════════════════════════════════════════
+
+// Caja del MOTOR (BJB) — datos del manual Ford en español
+const BJB_DATA = [
+  {n:'1',a:'40A',c:'Módulo ABS',st:'ok',d:'Módulo ABS. Si funde: ABS inoperativo + testigo encendido.'},
+  {n:'1',a:'30A',c:'Módulo ABS/ESP',st:'ok',d:'Módulo ABS/ESP combinado.'},
+  {n:'2',a:'60A',c:'Ventilador alta velocidad',st:'ok',d:'Ventilador del sistema de refrigeración alta velocidad.'},
+  {n:'3',a:'40A',c:'Ventilador refrigeración',st:'ok',d:'Ventilador del sistema de refrigeración.'},
+  {n:'3',a:'30A',c:'Ventilador baja velocidad',st:'ok',d:'Ventilador baja velocidad de refrigeración.'},
+  {n:'4',a:'30A',c:'Ventilador calefacción',st:'ok',d:'Motor del ventilador de calefacción. Si funde: sin calefacción ni A/C.'},
+  {n:'5',a:'60A',c:'Caja CJB (batería)',st:'ok',d:'Alimentación principal de la caja de fusibles del interior del vehículo (batería).'},
+  {n:'6',a:'30A',c:'Módulo control carrocería',st:'ok',d:'Módulo de control de la carrocería (BCM).'},
+  {n:'7',a:'60A',c:'Caja CJB (encendido)',st:'ok',d:'Caja de fusibles del interior del vehículo (encendido).'},
+  {n:'8',a:'60A',c:'Bujías de precalentamiento',st:'ok',d:'Bujías de precalentamiento (motores diesel).'},
+  {n:'9',a:'60A',c:'Parabrisas térmico',st:'ok',d:'Parabrisas térmico calefaccionado.'},
+  {n:'10',a:'—',c:'No se utiliza',st:'empty',d:'Posición no utilizada.'},
+  {n:'11',a:'30A',c:'Relé de arranque',st:'ok',d:'Relé de arranque del motor. Si funde: motor no arranca.'},
+  {n:'12',a:'10A',c:'Luz larga izquierda',st:'ok',d:'Relé de la luz larga izquierda.'},
+  {n:'13',a:'10A',c:'Luz larga derecha',st:'ok',d:'Relé de la luz larga derecha.'},
+  {n:'14',a:'10A',c:'Luz corta izquierda',st:'ok',d:'Relé de la luz corta izquierda.'},
+  {n:'15',a:'10A',c:'Luz corta derecha',st:'ok',d:'Relé de la luz corta derecha.'},
+  {n:'16',a:'15A',c:'Motor / ventilador alto y bajo',st:'ok',d:'Módulo de control del motor, ventilador de refrigeración alto y bajo.'},
+  {n:'17',a:'15A',c:'Sensores HEGO',st:'ok',d:'Sensores de oxígeno HEGO (motores gasolina). Falla: mezcla errática, P0130-P0167.'},
+  {n:'18',a:'10A',c:'Caja de cambios automática',st:'ok',d:'Caja de cambios FN automática.'},
+  {n:'22',a:'15A',c:'Alimentación iluminación',st:'ok',d:'Alimentación de la batería al control de la iluminación.'},
+  {n:'23',a:'15A',c:'Faros antiniebla',st:'ok',d:'Faros antiniebla delanteros.'},
+  {n:'24',a:'15A',c:'Intermitentes',st:'ok',d:'Luces de giro / direccionales.'},
+  {n:'25',a:'10A',c:'Luces diurnas DRL',st:'ok',d:'Luces de conducción diurna.'},
+  {n:'26',a:'7.5A',c:'Retrovisores / elevalunas',st:'ok',d:'Retrovisores eléctricos, plegables, elevalunas conductor.'},
+  {n:'27',a:'7.5A',c:'Módulo transmisión',st:'ok',d:'Módulo de control del sistema de transmisión.'},
+  {n:'28',a:'20A',c:'Módulo ABS/ESP',st:'chk',d:'Módulo del ABS y ESP. Si funde: testigos ABS y ESP encendidos.'},
+  {n:'29',a:'10A',c:'Embrague A/C',st:'ok',d:'Embrague del compresor del aire acondicionado.'},
+  {n:'32',a:'20A',c:'Bocina / alarma / keyless',st:'ok',d:'Bocina, ahorro de batería, módulo de apertura sin llave.'},
+  {n:'33',a:'20A',c:'Luneta térmica',st:'ok',d:'Luneta trasera calefaccionada.'},
+  {n:'34',a:'20A',c:'Bomba de combustible',st:'chk',d:'Relé de la bomba de combustible, calentador Diesel. Si funde: motor no arranca.'},
+];
+
+// Caja del HABITÁCULO (CJB Tipo 2) — datos del manual Ford en español
+const CJB_DATA = [
+  {n:'1',a:'7.5A',c:'Encendido / sensor lluvia',st:'ok',d:'Encendido, sensor de lluvia, parabrisas térmico.'},
+  {n:'2',a:'10A',c:'Luces de freno',st:'ok',d:'Luces de freno. Si funde: sin stop lights — peligroso.'},
+  {n:'3',a:'7.5A',c:'Luz marcha atrás / cámara',st:'ok',d:'Luz de marcha atrás y cámara retrovisora.'},
+  {n:'4',a:'7.5A',c:'Nivelación de faros',st:'ok',d:'Nivelación eléctrica de los faros.'},
+  {n:'5',a:'20A',c:'Limpia-lavaparabrisas',st:'ok',d:'Motor del limpiaparabrisas delantero y bomba del lavacristales.'},
+  {n:'6',a:'15A',c:'Limpialuneta trasera',st:'ok',d:'Motor del limpiaparabrisas trasero.'},
+  {n:'7',a:'15A',c:'Bomba lavacristales',st:'ok',d:'Bomba del sistema de lavado de cristales.'},
+  {n:'8',a:'10A',c:'Ayuda para aparcar',st:'ok',d:'Sistema de ayuda para aparcar (sensores de parking).'},
+  {n:'10',a:'7.5A',c:'Asientos calefactados',st:'ok',d:'Asientos calefactados delanteros.'},
+  {n:'12',a:'10A',c:'Módulo airbag',st:'ok',d:'Módulo del airbag. NO reemplazar sin diagnóstico previo.'},
+  {n:'13',a:'10A',c:'EPS / cuadro / antirrobo / ABS',st:'chk',d:'Servodirección eléctrica, cuadro de instrumentos, encendido, PATS, ABS.'},
+  {n:'14',a:'7.5A',c:'PCM / selectora / bomba comb.',st:'ok',d:'Módulo de control del motor, palanca selectora, bomba de combustible.'},
+  {n:'15',a:'7.5A',c:'Audio / cuadro',st:'ok',d:'Sistema de audio y cuadro de instrumentos.'},
+  {n:'16',a:'7.5A',c:'Retrovisor térmico',st:'ok',d:'Retrovisor exterior calefaccionado.'},
+  {n:'17',a:'15A',c:'Interruptor de encendido',st:'ok',d:'Interruptor de encendido (llave).'},
+  {n:'18',a:'20A',c:'Encendedor / toma 12V',st:'ok',d:'Encendedor y toma de corriente delantera 12V. Funde por sobrecarga.'},
+  {n:'19',a:'15A',c:'Conector OBD datos',st:'ok',d:'Conector de transmisión de datos (OBD-II de 16 pines).'},
+  {n:'20',a:'20A',c:'Módulo de remolque',st:'ok',d:'Módulo del sistema de remolque.'},
+  {n:'21',a:'15A',c:'Audio / navegación / Bluetooth',st:'ok',d:'Sistema de audio, navegación GPS y Bluetooth.'},
+  {n:'22',a:'7.5A',c:'Cuadro de instrumentos',st:'ok',d:'Cuadro de instrumentos secundario.'},
+  {n:'23',a:'7.5A',c:'Pantalla / reloj / clima',st:'ok',d:'Pantalla multifuncional, reloj, sensor interior, climatización.'},
+  {n:'25',a:'30A',c:'Elevalunas delanteros',st:'ok',d:'Elevalunas eléctricos delanteros.'},
+  {n:'26',a:'30A',c:'Parabrisas térmico izq',st:'ok',d:'Parabrisas térmico lateral izquierdo.'},
+  {n:'27',a:'30A',c:'Parabrisas térmico der',st:'ok',d:'Parabrisas térmico lateral derecho.'},
+  {n:'28',a:'30A',c:'Módulo calidad tensión',st:'ok',d:'Módulo de calidad de tensión.'},
+  {n:'30',a:'20A',c:'Encendedor trasero 12V',st:'ok',d:'Encendedor y toma de corriente trasera 12V.'},
+  {n:'31',a:'30A',c:'Elevalunas traseros',st:'ok',d:'Elevalunas eléctricos traseros.'},
+  {n:'34',a:'20A',c:'Apertura sin llave (1)',st:'ok',d:'Sistema de apertura sin llave — relé 1.'},
+  {n:'35',a:'20A',c:'Apertura sin llave (2)',st:'ok',d:'Sistema de apertura sin llave — relé 2.'},
+];
+
+function buildFuseTable(data, containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const rows = data.filter(f => f.st !== 'empty').map(f => {
+    const color = f.st === 'chk' ? 'var(--yel)' : f.st === 'bad' ? 'var(--red)' : 'var(--muted2)';
+    return `<div onclick="showFuseTip(${JSON.stringify(f).replace(/"/g,"'")}, '${containerId.replace('-table','')}')"
+      style="display:flex;gap:8px;align-items:center;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid transparent;transition:all .12s;margin-bottom:2px"
+      onmouseover="this.style.background='var(--surface2)';this.style.borderColor='var(--border2)'"
+      onmouseout="this.style.background='transparent';this.style.borderColor='transparent'">
+      <span style="font-family:'Space Mono',monospace;font-size:9px;font-weight:700;color:var(--cyan);min-width:24px">F${f.n}</span>
+      <span style="font-family:'Space Mono',monospace;font-size:9px;color:var(--yel);min-width:30px">${f.a}</span>
+      <span style="font-size:10px;color:${color};flex:1;line-height:1.3">${f.c}</span>
+    </div>`;
+  }).join('');
+  el.innerHTML = rows;
+}
+
+function showFuseTip(f, prefix) {
+  const ttId = 'tt-' + prefix;
+  document.getElementById(ttId + '-num').textContent = 'Fusible F' + f.n;
+  document.getElementById(ttId + '-comp').textContent = f.c;
+  document.getElementById(ttId + '-amp').textContent = f.a;
+  document.getElementById(ttId + '-desc').textContent = f.d;
+  const stEl = document.getElementById(ttId + '-st');
+  if (f.st === 'relay') { stEl.textContent = '● RELAY'; stEl.className = 'ft-status'; stEl.style.cssText = 'color:var(--mag);border-color:rgba(247,0,255,.3);background:var(--mag-dim)'; }
+  else if (f.st === 'ok') { stEl.textContent = '● OK'; stEl.className = 'ft-status fts-ok'; }
+  else if (f.st === 'chk') { stEl.textContent = '● REVISAR — síntoma activo en este Fiesta'; stEl.className = 'ft-status fts-chk'; }
+  else { stEl.textContent = '● FALLA'; stEl.className = 'ft-status fts-bad'; }
+  document.getElementById(ttId).classList.add('show');
+}
+
+// Hotspots sobre la imagen del motor BJB
+// Coordenadas como % del ancho/alto de la imagen real (600x436)
+function renderBJBHotspots() {
+  const wrap = document.getElementById('bjb-photo-wrap');
+  const img = document.getElementById('bjb-img');
+  if (!wrap || !img) return;
+  // Posiciones aproximadas de las filas de fusibles en la imagen
+  // La imagen muestra la caja abierta de arriba
+  const hotspots = [
+    {n:'1',  pct_x:12, pct_y:15, st:'ok'},
+    {n:'2',  pct_x:24, pct_y:15, st:'ok'},
+    {n:'3',  pct_x:36, pct_y:15, st:'ok'},
+    {n:'4',  pct_x:48, pct_y:15, st:'ok'},
+    {n:'5',  pct_x:60, pct_y:15, st:'ok'},
+    {n:'6',  pct_x:72, pct_y:15, st:'ok'},
+    {n:'7',  pct_x:84, pct_y:15, st:'ok'},
+    {n:'8',  pct_x:12, pct_y:33, st:'ok'},
+    {n:'9',  pct_x:24, pct_y:33, st:'ok'},
+    {n:'11', pct_x:36, pct_y:33, st:'ok'},
+    {n:'16', pct_x:12, pct_y:52, st:'ok'},
+    {n:'17', pct_x:24, pct_y:52, st:'ok'},
+    {n:'22', pct_x:36, pct_y:52, st:'ok'},
+    {n:'23', pct_x:48, pct_y:52, st:'ok'},
+    {n:'24', pct_x:60, pct_y:52, st:'ok'},
+    {n:'25', pct_x:72, pct_y:52, st:'ok'},
+    {n:'26', pct_x:84, pct_y:52, st:'ok'},
+    {n:'27', pct_x:12, pct_y:70, st:'ok'},
+    {n:'28', pct_x:24, pct_y:70, st:'chk'},
+    {n:'29', pct_x:36, pct_y:70, st:'ok'},
+    {n:'32', pct_x:48, pct_y:70, st:'ok'},
+    {n:'33', pct_x:60, pct_y:70, st:'ok'},
+    {n:'34', pct_x:72, pct_y:70, st:'chk'},
+  ];
+  hotspots.forEach(h => {
+    const dot = document.createElement('div');
+    dot.className = 'fuse-hotspot' + (h.st === 'chk' ? ' status-chk' : '');
+    dot.style.cssText = `left:${h.pct_x}%;top:${h.pct_y}%;width:6%;height:8%;transform:translate(-50%,-50%)`;
+    dot.title = 'F' + h.n;
+    const fuse = BJB_DATA.find(f => f.n === h.n);
+    if (fuse) dot.onclick = () => showFuseTip(fuse, 'bjb');
+    wrap.appendChild(dot);
+    // Label
+    const lbl = document.createElement('div');
+    lbl.className = 'fuse-num-label';
+    lbl.style.cssText = `left:${h.pct_x}%;top:${h.pct_y + 3.5}%;transform:translateX(-50%);font-size:6px`;
+    lbl.textContent = h.n;
+    wrap.appendChild(lbl);
+  });
+}
+
+function renderCJBHotspots() {
+  // Hotspots para habitáculo — similar approach
+  // Solo unos pocos clave para no saturar la imagen
+}
+
+function switchFuseTab(tab) {
+  document.getElementById('fuse-panel-motor').style.display = tab === 'motor' ? 'block' : 'none';
+  document.getElementById('fuse-panel-hab').style.display = tab === 'hab' ? 'block' : 'none';
+  document.getElementById('tab-motor').classList.toggle('active', tab === 'motor');
+  document.getElementById('tab-hab').classList.toggle('active', tab === 'hab');
+}
+
+// ══════ DTC ══════
+let currentCat = 'all';
+
+function buildChips() {
+  const arr = Object.entries(DTC).filter(([k]) => currentCat === 'all' || k.startsWith(currentCat));
+  const chips = document.getElementById('dtc-chips');
+  chips.innerHTML = '';
+  arr.slice(0, 20).forEach(([code]) => {
+    const el = document.createElement('span');
+    el.className = 'dtc-chip cat-' + code[0].toLowerCase();
+    el.textContent = code;
+    el.onclick = () => qs(code);
+    chips.appendChild(el);
+  });
+}
+
+function buildCatalog() {
+  const cat = document.getElementById('dtc-cat');
+  cat.innerHTML = '';
+  const arr = Object.entries(DTC).filter(([k]) => currentCat === 'all' || k.startsWith(currentCat));
+  arr.forEach(([code, d]) => {
+    const el = document.createElement('div');
+    el.className = 'cat-item';
+    el.innerHTML = `<span class="cat-code cc-${code[0].toLowerCase()}">${code}</span><span class="cat-desc">${d.t}</span>`;
+    el.onclick = () => { qs(code); showSec('dtc'); };
+    cat.appendChild(el);
+  });
+}
+
+function filterCat(cat) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.className = 'cat-btn');
+  if (cat === 'all') document.getElementById('f-all').className = 'cat-btn active-p';
+  else document.getElementById('f-' + cat.toLowerCase()).className = 'cat-btn active-' + cat.toLowerCase();
+  buildChips(); buildCatalog();
+  document.getElementById('dtc-result').classList.remove('show');
+  document.getElementById('dtc-nf').classList.remove('show');
+}
+
+function doSearch() { qs(document.getElementById('dtc-in').value.trim().toUpperCase()); }
+
+function qs(code) {
+  document.getElementById('dtc-in').value = code;
+  const r = document.getElementById('dtc-result');
+  const nf = document.getElementById('dtc-nf');
+  r.classList.remove('show'); nf.classList.remove('show');
+  const d = DTC[code];
+  if (!d) { nf.classList.add('show'); return; }
+  document.getElementById('r-code').textContent = code;
+  document.getElementById('r-title').textContent = d.t;
+  document.getElementById('r-sub').textContent = d.s;
+  const se = document.getElementById('r-sev');
+  se.textContent = d.sev === 'HIGH' ? '⚠ ALTA' : d.sev === 'MED' ? '● MEDIA' : '○ BAJA';
+  se.className = 'dtc-sev ' + (d.sev === 'HIGH' ? 'sev-h' : d.sev === 'MED' ? 'sev-m' : 'sev-l');
+  const mk = (id, items) => document.getElementById(id).innerHTML = items.map(i => `<li>${i}</li>`).join('');
+  mk('r-causes', d.causes); mk('r-diag', d.diag); mk('r-fix', d.fix);
+  r.classList.add('show');
+  r.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function showSec(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('visible');
+  const idx = {dtc:0,fuse:1,story:2}[id];
+  document.querySelectorAll('.nav-btn')[idx].classList.add('active');
+}
+
+// ══════ INIT ══════
+buildFuseTable(BJB_DATA, 'bjb-table');
+buildFuseTable(CJB_DATA, 'cjb-table');
+filterCat('all');
+</script>
+</body>
+</html>
